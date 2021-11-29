@@ -1,3 +1,6 @@
+import pandas as pd
+
+
 class Convert:
     """
     A class used to convert ISO-3166 alpha-2 codes.
@@ -10,6 +13,15 @@ class Convert:
     -------
     to_continent_code(country: str)
         Converts country code to continent code
+
+    to_continent_name(code: str)
+        Converts continent code to continent name
+
+    map_to_continent_code(df: pd.DataFrame)
+        Maps continent codes to visitor_country
+
+    map_to_continent_name(df: pd.DataFrame)
+        Maps continent names to visitor_country
 
     """
 
@@ -325,3 +337,55 @@ class Convert:
             raise KeyError("Continent code not recognized.")
 
         return self._code_to_continent[code]
+
+    def map_to_continent_code(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert country code to continent code
+
+        Take a dataframe and map the country_to_continent code dictionary on its 'visitor_country' column.
+        Afterwards, map the code_to_continent name dictionary on 'visitor_country'.
+
+        Parameters
+        ----------
+        df: pd.DataFrame
+            Dataframe where country codes need to be converted into continent codes and then later into names
+
+        Returns
+        -------
+        name_df: pd.DataFrame
+            Dataframe where country codes have been replaced with continent names
+
+        """
+        # Map the dictionary to replace values
+        series = df.visitor_country.map(self._country_to_continent)
+
+        # Map results in a series, so convert into DataFrame, convert continent codes to names and return it
+        code_df = pd.DataFrame(series).reset_index()
+        code_df.columns = ['index', 'visitor_country']
+        return self.map_to_continent_name(code_df)
+
+    def map_to_continent_name(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Convert continent code to continent name
+
+        Take a series, convert it to dataframe and map the code_to_continent name dictionary on its
+        'visitor_country' column.
+
+        Parameters
+        ----------
+        df: pd.DataFrame
+            DataFrame where continent codes need to be converted into continent names
+
+        Returns
+        -------
+        df: pd.DataFrame
+            Dataframe where continent codes have been replaced with continent names
+
+        """
+        # Map returns a series
+        series = df.visitor_country.map(self._code_to_continent)
+
+        # Convert series to df and return it
+        name_df = pd.DataFrame(series).reset_index()
+        name_df.columns = ['index', 'visitor_country']
+        return name_df
