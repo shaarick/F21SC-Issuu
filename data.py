@@ -1,3 +1,5 @@
+import os.path
+
 import pandas as pd
 import json
 from urllib import request
@@ -7,13 +9,18 @@ Module for converting JSON files into dataframes which can then be used by our p
 """
 
 
-def get_data() -> pd.DataFrame:
+def get_data(testing=False) -> pd.DataFrame:
     """
     Convert JSON data to Pandas Dataframe.
 
     This function assumes a "issuu_cw2.json" file is present in the same directory.
     It converts all JSON objects in the file to a dictionary, all of which are appended to a list
     and then converted to a pandas dataframe.
+
+    Parameters
+    ----------
+    testing: Bool, optional
+        Default is False. When true, searches for .json text file in parent directory.
     Returns
     -------
     df
@@ -24,8 +31,14 @@ def get_data() -> pd.DataFrame:
     doc_list = []
     print("Started reading JSON file.")
 
+    # If this module is opened in test dir, then move up one dir to find dataset
+    if testing:
+        file = os.getcwd() + "/../issuu_cw2.json"
+    else:
+        file = "issuu_cw2.json"
+
     # Open .JSON file using context manager
-    with open("issuu_cw2.json") as f:
+    with open(file) as f:
         # File contains multiple JSON objects. Loop over all of them.
         for js in f:
             # Convert JSON to dic and append to list
