@@ -1,7 +1,6 @@
 import unittest
 import data
 import pandas as pd
-import os
 
 
 class DataTest(unittest.TestCase):
