@@ -30,6 +30,8 @@ class Controller:
         try:
             # Set the model's current document ID
             self.model.document_id = document_id
+            # Show a success message indicating document was found
+            self.view.show_success("Document found!")
             # Invoke the model's method which shows country and continent for its current document_id
             self.model.view_country()
 
