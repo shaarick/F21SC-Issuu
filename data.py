@@ -1,15 +1,16 @@
 import os.path
-
 import pandas as pd
 import json
 from urllib import request
+from timer import timer
 
 """
 Module for converting JSON files into dataframes which can then be used by our program.
 """
 
 
-def get_data(testing=False) -> pd.DataFrame:
+@timer
+def get_data(name: str, testing=False) -> pd.DataFrame:
     """
     Convert JSON data to Pandas Dataframe.
 
@@ -29,13 +30,13 @@ def get_data(testing=False) -> pd.DataFrame:
     """
     # Create empty list
     doc_list = []
-    print("Started reading JSON file.")
+    print("Loading data..")
 
     # If this module is opened in test dir, then move up one dir to find dataset
     if testing:
-        file = os.getcwd() + "/../issuu_cw2.json"
+        file = os.getcwd() + "/../" + name
     else:
-        file = "issuu_cw2.json"
+        file = name
 
     # Open .JSON file using context manager
     with open(file) as f:
@@ -44,7 +45,6 @@ def get_data(testing=False) -> pd.DataFrame:
             # Convert JSON to dic and append to list
             doc_dic = json.loads(js)
             doc_list.append(doc_dic)
-    print("Finished reading JSON file.")
     # Convert list to dataframe
     df = pd.DataFrame(doc_list)
     return df

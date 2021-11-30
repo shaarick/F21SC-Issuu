@@ -54,26 +54,39 @@ class View(ttk.Frame):
         self.label.grid(row=1, column=0)
 
         # Document ID Entry box
-        self.document_id = tk.StringVar(name="Enter Document ID")
+        self.document_id = tk.StringVar(name="Document UUID")
         self.document_entry = ttk.Entry(self, textvariable=self.document_id, width=30)
         self.document_entry.grid(row=1, column=1, sticky=tk.NSEW)
 
-        # View Country & Continent Button
-        self.view_button = ttk.Button(self, text='View Country & Continent', command=self.view_button_clicked)
-        self.view_button.grid(row=1, column=2, padx=3, sticky=tk.NSEW)
+        # Label
+        self.label_user = ttk.Label(self, text='User UUID:')
+        self.label_user.grid(row=2, column=0)
+
+        # User ID Entry box
+        self.user_id = tk.StringVar(name="User UUID")
+        self.user_id = ttk.Entry(self, textvariable=self.user_id, width=30)
+        self.user_id.grid(row=2, column=1, sticky=tk.NSEW)
+
+        # View Country Button
+        self.view_button = ttk.Button(self, text='View Country', command=self.view_button_clicked)
+        self.view_button.grid(row=3, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
+
+        # View Continent Button
+        self.view_button_continent = ttk.Button(self, text='View Continent', command=self.view_button_continent_clicked)
+        self.view_button_continent.grid(row=4, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Long Browsers Button
         self.browser_button = ttk.Button(self, text='View Long Browsers', command=self.browser_button_clicked)
-        self.browser_button.grid(row=2, column=0, padx=3, sticky=tk.NSEW)
+        self.browser_button.grid(row=5, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Short Browsers Button
         self.browser_button_short = ttk.Button(self, text='View Short Browsers',
                                                command=self.short_browser_button_clicked)
-        self.browser_button_short.grid(row=2, column=1, padx=3, sticky=tk.NSEW)
+        self.browser_button_short.grid(row=6, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # Message
         self.message_label = ttk.Label(self, text='', foreground='red')
-        self.message_label.grid(row=3, column=1, sticky=tk.W)
+        self.message_label.grid(row=7, column=0, columnspan=2, sticky=tk.NSEW)
 
         # Set Controller
         self.controller = None
@@ -109,7 +122,7 @@ class View(ttk.Frame):
 
     def view_button_clicked(self):
         """
-        Signals controller that country/continent histograms were requested
+        Signals controller that country histograms were requested
 
         Passes text in entry box to controller, which then passes it to Model so text can be validated and histograms
         can be displayed.
@@ -117,6 +130,17 @@ class View(ttk.Frame):
         """
         if self.controller:
             self.controller.view_country(self.document_id.get())
+
+    def view_button_continent_clicked(self):
+        """
+        Signals controller that continent histograms were requested
+
+        Passes text in entry box to controller, which then passes it to Model so text can be validated and histograms
+        can be displayed.
+
+        """
+        if self.controller:
+            self.controller.view_continent(self.document_id.get())
 
     def show_error(self, message):
         """

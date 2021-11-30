@@ -24,7 +24,7 @@ class Controller:
 
     def view_country(self, document_id):
         """
-        View country and continent of viewers who read document_id file
+        View country of viewers who read document_id file
 
         Parameters
         ----------
@@ -39,6 +39,29 @@ class Controller:
             self.view.show_success("Document found!")
             # Invoke the model's method which shows country and continent for its current document_id
             self.model.view_country()
+
+        except (KeyError, ValueError) as error:
+            # If no document found or invalid ID given as input, invoke the View class's method to display
+            # this error on the GUI window
+            self.view.show_error(error)
+
+    def view_continent(self, document_id):
+        """
+        View continent of viewers who read document_id file
+
+        Parameters
+        ----------
+        document_id: str
+            unique identification for file on Issuu
+
+        """
+        try:
+            # Set the model's current document ID
+            self.model.document_id = document_id
+            # Show a success message indicating document was found
+            self.view.show_success("Document found!")
+            # Invoke the model's method which shows country and continent for its current document_id
+            self.model.view_continent()
 
         except (KeyError, ValueError) as error:
             # If no document found or invalid ID given as input, invoke the View class's method to display

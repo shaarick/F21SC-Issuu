@@ -1,5 +1,4 @@
 import tkinter as tk
-from gui.model import Model
 from gui.view import View
 from gui.controller import Controller
 
@@ -13,12 +12,12 @@ class App(tk.Tk):
     Their interaction is governed by the Controller.
 
     """
-    def __init__(self, args: dict):
+    def __init__(self, args: dict, model):
         super().__init__()
         self.title("Issuu Data Analysis")
 
         # Create model and pass the command line options to it
-        model = Model(args, '')
+        # model = Model(args, '')
 
         # Create views and pass the command line options to it
         view = View(args, self)

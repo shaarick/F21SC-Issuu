@@ -4,6 +4,7 @@ from data import get_data_from_url
 from convert import Convert
 import numpy as np
 from matplotlib.ticker import PercentFormatter
+from timer import timer
 
 
 class Model:
@@ -35,13 +36,13 @@ class Model:
 
     def __init__(self, args, document_id):
         self._document_id = document_id
-
+        self.args = args
         # In the command line, if url was mentioned use it to retrieve JSON data
         if args['url'] is not None:
             self.df = get_data_from_url(args['url'])
         # If no url was mentioned, use the locally saved small sample issuu data
         else:
-            self.df = get_data()
+            self.df = get_data(args['file_name'])
 
     @property
     def document_id(self):
@@ -72,32 +73,60 @@ class Model:
         else:
             self._document_id = value
 
-    def view_country(self):
+    def view_country(self, viewing=True):
         """
         View country and continent of viewers for the class's current document_id
 
         """
+        if self.args['task'] != '7':
+            if self.args['document_uuid'] is None:
+                raise ValueError("No document uuid provided")
+            elif len(self.df[self.df.subject_doc_id == self.args['document_uuid']]) == 0:
+                raise ValueError("No document with that uuid found")
+            self.document_id = self.args['document_uuid']
+
         # Filter the dataset dataframe to only get rows which correspond to the given document_id
         # i.e. get countries of viewers for this file
         doc_with_id = self.df[self.df.subject_doc_id == self.document_id]
 
-        # Prepare two figures side by side
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
-        fig.suptitle(f'Histogram of Country and Continents for file:\n{self._document_id}')
+        if viewing:
+            # Prepare two figures side by side
+            fig, ax1 = plt.subplots(1, 1, figsize=(6, 6))
+            fig.suptitle(f'Histogram of Countries for file:\n{self._document_id}')
 
-        # Plot countries
-        ax1.hist(doc_with_id.visitor_country)
-        ax1.set_title('Countries')
-        ax1.set(ylabel='Count')
+            # Plot countries
+            ax1.hist(doc_with_id.visitor_country)
+            ax1.set_title('Countries')
+            ax1.set(ylabel='Count')
+            plt.show()
+
+        return doc_with_id
+
+    def view_continent(self):
+        if self.args['task'] != '7':
+            if self.args['document_uuid'] is None:
+                raise ValueError("No document uuid provided")
+            elif len(self.df[self.df.subject_doc_id == self.args['document_uuid']]) == 0:
+                raise ValueError("No document with that uuid found")
+            else:
+                self.document_id = self.args['document_uuid']
+
+        # Prepare two figures side by side
+        fig, ax2 = plt.subplots(1, 1, figsize=(6, 6))
+        fig.suptitle(f'Histogram of Continents for file:\n{self._document_id}')
+
+        # Use data from view countries function to get the country dataframe
+        doc_with_countries = self.view_country(viewing=False)
 
         # Instantiate a converter
         converter = Convert()
         # Convert viewer countries into continent names and save new dataframe
-        docs_with_continent_codes = converter.map_to_continent_code(doc_with_id)
+        docs_with_continent_codes = converter.map_to_continent_code(doc_with_countries)
 
         # Plot new dataframe with continent names
         ax2.hist(docs_with_continent_codes.visitor_country)
         ax2.set_title('Continents')
+        ax2.set(ylabel='Count')
 
         plt.show()
 
@@ -107,9 +136,9 @@ class Model:
 
         Displays histogram of long browser names, i.e. the full visitor_useragent value
         """
-
+        print("Creating Histogram...")
         # Prepare figure and axis
-        fig, ax1 = plt.subplots(1, 1, figsize=(20, 6))
+        fig, ax1 = plt.subplots(1, 1, figsize=(10, 6))
         fig.suptitle('Histogram of Long Browser Names')
 
         # Plot long names
@@ -127,16 +156,10 @@ class Model:
         to return only the short browser name which is then used to plot Histogram
 
         """
+        print("Creating Histogram...")
         # Get the useragent string, split it at '/' since all browser names have that followed by their versions.
         # Once we have the split string, browser name is always the first element so we access it using the 0 index.
         self.df['browser'] = self.df.apply(lambda row: row['visitor_useragent'].split('/')[0], axis=1)
-
-        # In the sample small json file saved locally, UCWEB and Dalvik are mentioned in the histogram but appear
-        # almost as 0%. Checked their number of instances informally without len here. UCWEB appears once, Davlik 5
-        # times. So their proportion is too low to show up on graph.
-
-        # print(self.df.browser[self.df.browser == 'UCWEB'])
-        # print(self.df.browser[self.df.browser == 'Dalvik'])
 
         # Prepare figure and axis
         fig, ax1 = plt.subplots(1, 1, figsize=(8, 6))
