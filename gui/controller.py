@@ -9,13 +9,19 @@ class Controller:
     Methods
     -------
     view_country(document_id: str)
-        View country and continents of viewers who read the file identified with document_id
+        View countries of viewers who read the file identified with document_id
 
-    view_browser
+    view_continent(document_id: str)
+        View continents of viewers who read the file identified with document_id
+
+    view_long_browsers
         View long browser names histogram
 
-    short_browser_view
+    view_short_browsers
         View short browser names histogram
+
+    view_top_readers
+        View top 10 readers
     """
 
     def __init__(self, model, view):
@@ -68,10 +74,14 @@ class Controller:
             # this error on the GUI window
             self.view.show_error(error)
 
-    def view_browser(self):
+    def view_long_browsers(self):
         """Invoke Model's method to display long name browser histogram"""
-        self.model.view_browsers()
+        self.model.view_long_browsers()
 
-    def short_browser_view(self):
+    def view_short_browsers(self):
         """Invoke Model's method to display short name browser histogram"""
         self.model.view_short_browsers()
+
+    def view_top_readers(self):
+        """Invoke Model's method to display top 10 readers"""
+        self.model.view_top_readers()

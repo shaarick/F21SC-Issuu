@@ -4,7 +4,6 @@ from data import get_data_from_url
 from convert import Convert
 import numpy as np
 from matplotlib.ticker import PercentFormatter
-from timer import timer
 
 
 class Model:
@@ -25,13 +24,19 @@ class Model:
     Methods
     -------
     view_country
-        Plots countries and continents of viewers for a given document_id
+        Plots countries of viewers for a given document_id
 
-    view_browsers
+    view_continent
+        Plots continents of viewers for a given document_id
+
+    view_long_browsers
         Plots long name browser histogram for entire dataset
 
     view_short_browsers
         Plots short name browser histogram for entire dataset
+
+    view_top_readers
+        Displays top 10 readers for the entire dataset
     """
 
     def __init__(self, args, document_id):
@@ -130,7 +135,7 @@ class Model:
 
         plt.show()
 
-    def view_browsers(self):
+    def view_long_browsers(self):
         """
         Display Histogram of each browser used in the dataset
 
@@ -170,3 +175,6 @@ class Model:
         ax1.set(ylabel='Percentage')
         plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
         plt.show()
+
+    def view_top_readers(self):
+        pass

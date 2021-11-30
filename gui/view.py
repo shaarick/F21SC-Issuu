@@ -24,9 +24,6 @@ class View(ttk.Frame):
     set_controller(value: Controller)
         Sets the controller for this View Frame. All signals (clicks, etc.) will be sent to this controller.
 
-    view_button_clicked
-        Signals the controller that histograms were requested
-
     show_error(message: str)
         Displays error message on the GUI
 
@@ -36,11 +33,20 @@ class View(ttk.Frame):
     hide_message
         Hides any messages being displayed on the GUI
 
-    def browser_button_clicked
+    view_country_button_clicked
+        Signals the controller that country histograms were requested
+
+    view_continent_button_clicked
+        Signals the controller that continent histograms were requested
+
+    view_long_browser_button_clicked
         Signals the Controller that long browser histogram is requested
 
-    def short_browser_button_clicked
+    view_short_browser_button_clicked
         Signals the Controller that short browser histogram is requested
+
+    readers_button_clicked
+        Signals the Controller that top readers list is requested
     """
 
     def __init__(self, args, parent):
@@ -68,25 +74,30 @@ class View(ttk.Frame):
         self.user_id.grid(row=2, column=1, sticky=tk.NSEW)
 
         # View Country Button
-        self.view_button = ttk.Button(self, text='View Country', command=self.view_button_clicked)
+        self.view_button = ttk.Button(self, text='View Country', command=self.view_country_button_clicked)
         self.view_button.grid(row=3, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Continent Button
-        self.view_button_continent = ttk.Button(self, text='View Continent', command=self.view_button_continent_clicked)
+        self.view_button_continent = ttk.Button(self, text='View Continent', command=self.view_continent_button_clicked)
         self.view_button_continent.grid(row=4, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Long Browsers Button
-        self.browser_button = ttk.Button(self, text='View Long Browsers', command=self.browser_button_clicked)
+        self.browser_button = ttk.Button(self, text='View Long Browsers', command=self.view_long_browser_button_clicked)
         self.browser_button.grid(row=5, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Short Browsers Button
         self.browser_button_short = ttk.Button(self, text='View Short Browsers',
-                                               command=self.short_browser_button_clicked)
+                                               command=self.view_short_browser_button_clicked)
         self.browser_button_short.grid(row=6, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
+
+        # View Top Readers Button
+        self.top_readers_button = ttk.Button(self, text='Top 10 Readers',
+                                             command=self.view_top_readers_button_clicked)
+        self.top_readers_button.grid(row=7, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # Message
         self.message_label = ttk.Label(self, text='', foreground='red')
-        self.message_label.grid(row=7, column=0, columnspan=2, sticky=tk.NSEW)
+        self.message_label.grid(row=8, column=0, columnspan=2, sticky=tk.NSEW)
 
         # Set Controller
         self.controller = None
@@ -104,43 +115,6 @@ class View(ttk.Frame):
             The controller which needs to be assigned to this frame
         """
         self.controller = controller
-
-        # For automated task 2, check if document_id was given and task 2 was supposed to be performed
-        if self.args['document_uuid'] is not None and self.args['task'] == 2:
-            # If conditions are true, change the text box's value to the document_id supplied and press the view button
-            self.document_id.set(self.args.get('document_uuid'))
-            self.view_button_clicked()
-
-        # For automated task 3, check if task 3 has been requested with either the short or long option
-        elif self.args['browsers'] is not None and self.args['task'] == 3:
-            if self.args['browsers'] == 'long':
-                # Press button for long browser histogram
-                self.browser_button_clicked()
-            else:
-                # Press button for short browser histogram
-                self.short_browser_button_clicked()
-
-    def view_button_clicked(self):
-        """
-        Signals controller that country histograms were requested
-
-        Passes text in entry box to controller, which then passes it to Model so text can be validated and histograms
-        can be displayed.
-
-        """
-        if self.controller:
-            self.controller.view_country(self.document_id.get())
-
-    def view_button_continent_clicked(self):
-        """
-        Signals controller that continent histograms were requested
-
-        Passes text in entry box to controller, which then passes it to Model so text can be validated and histograms
-        can be displayed.
-
-        """
-        if self.controller:
-            self.controller.view_continent(self.document_id.get())
 
     def show_error(self, message):
         """
@@ -185,12 +159,39 @@ class View(ttk.Frame):
         """Hide any kind of messages being displayed on the GUI"""
         self.message_label['text'] = ''
 
-    def browser_button_clicked(self):
+    def view_country_button_clicked(self):
+        """
+        Signals controller that country histograms were requested
+
+        Passes text in entry box to controller, which then passes it to Model so text can be validated and histograms
+        can be displayed.
+
+        """
+        if self.controller:
+            self.controller.view_country(self.document_id.get())
+
+    def view_continent_button_clicked(self):
+        """
+        Signals controller that continent histograms were requested
+
+        Passes text in entry box to controller, which then passes it to Model so text can be validated and histograms
+        can be displayed.
+
+        """
+        if self.controller:
+            self.controller.view_continent(self.document_id.get())
+
+    def view_long_browser_button_clicked(self):
         """Signals controller that long browser histogram is requested"""
         if self.controller:
-            self.controller.view_browser()
+            self.controller.view_long_browsers()
 
-    def short_browser_button_clicked(self):
+    def view_short_browser_button_clicked(self):
         """Signals controller that short browser histogram is requested"""
         if self.controller:
-            self.controller.short_browser_view()
+            self.controller.view_short_browsers()
+
+    def view_top_readers_button_clicked(self):
+        """Signals controller that top readers list is requested"""
+        if self.controller:
+            self.controller.view_top_readers()
