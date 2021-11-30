@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from .controller import Controller
 
 
 class View(ttk.Frame):
@@ -20,7 +21,7 @@ class View(ttk.Frame):
 
     Methods
     -------
-    set_controller(c: Controller)
+    set_controller(value: Controller)
         Sets the controller for this View Frame. All signals (clicks, etc.) will be sent to this controller.
 
     view_button_clicked
@@ -34,7 +35,14 @@ class View(ttk.Frame):
 
     hide_message
         Hides any messages being displayed on the GUI
+
+    def browser_button_clicked
+        Signals the Controller that long browser histogram is requested
+
+    def short_browser_button_clicked
+        Signals the Controller that short browser histogram is requested
     """
+
     def __init__(self, args, parent):
         super().__init__(parent)
         self.args = args
@@ -52,11 +60,20 @@ class View(ttk.Frame):
 
         # View Country & Continent Button
         self.view_button = ttk.Button(self, text='View Country & Continent', command=self.view_button_clicked)
-        self.view_button.grid(row=1, column=3, padx=10)
+        self.view_button.grid(row=1, column=2, padx=3, sticky=tk.NSEW)
+
+        # View Long Browsers Button
+        self.browser_button = ttk.Button(self, text='View Long Browsers', command=self.browser_button_clicked)
+        self.browser_button.grid(row=2, column=0, padx=3, sticky=tk.NSEW)
+
+        # View Short Browsers Button
+        self.browser_button_short = ttk.Button(self, text='View Short Browsers',
+                                               command=self.short_browser_button_clicked)
+        self.browser_button_short.grid(row=2, column=1, padx=3, sticky=tk.NSEW)
 
         # Message
         self.message_label = ttk.Label(self, text='', foreground='red')
-        self.message_label.grid(row=2, column=1, sticky=tk.W)
+        self.message_label.grid(row=3, column=1, sticky=tk.W)
 
         # Set Controller
         self.controller = None
@@ -68,12 +85,10 @@ class View(ttk.Frame):
         Once the controller is set, check if command line arguments received at the time of this Frame's
         instantiation contained any tasks that need to be automated. E.g: if document_id and task 2 are
         present, then country/continent histogram will automatically be generated.
-
         Parameters
         ----------
         controller: Controller
             The controller which needs to be assigned to this frame
-
         """
         self.controller = controller
 
@@ -83,9 +98,18 @@ class View(ttk.Frame):
             self.document_id.set(self.args.get('document_uuid'))
             self.view_button_clicked()
 
+        # For automated task 3, check if task 3 has been requested with either the short or long option
+        elif self.args['browsers'] is not None and self.args['task'] == 3:
+            if self.args['browsers'] == 'long':
+                # Press button for long browser histogram
+                self.browser_button_clicked()
+            else:
+                # Press button for short browser histogram
+                self.short_browser_button_clicked()
+
     def view_button_clicked(self):
         """
-        Signals controller that histograms were requested
+        Signals controller that country/continent histograms were requested
 
         Passes text in entry box to controller, which then passes it to Model so text can be validated and histograms
         can be displayed.
@@ -136,3 +160,13 @@ class View(ttk.Frame):
     def hide_message(self):
         """Hide any kind of messages being displayed on the GUI"""
         self.message_label['text'] = ''
+
+    def browser_button_clicked(self):
+        """Signals controller that long browser histogram is requested"""
+        if self.controller:
+            self.controller.view_browser()
+
+    def short_browser_button_clicked(self):
+        """Signals controller that short browser histogram is requested"""
+        if self.controller:
+            self.controller.short_browser_view()

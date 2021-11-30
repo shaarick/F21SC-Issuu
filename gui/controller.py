@@ -11,6 +11,11 @@ class Controller:
     view_country(document_id: str)
         View country and continents of viewers who read the file identified with document_id
 
+    view_browser
+        View long browser names histogram
+
+    short_browser_view
+        View short browser names histogram
     """
 
     def __init__(self, model, view):
@@ -39,3 +44,11 @@ class Controller:
             # If no document found or invalid ID given as input, invoke the View class's method to display
             # this error on the GUI window
             self.view.show_error(error)
+
+    def view_browser(self):
+        """Invoke Model's method to display long name browser histogram"""
+        self.model.view_browsers()
+
+    def short_browser_view(self):
+        """Invoke Model's method to display short name browser histogram"""
+        self.model.view_short_browsers()
