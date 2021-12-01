@@ -45,7 +45,7 @@ class View(ttk.Frame):
     view_short_browser_button_clicked
         Signals the Controller that short browser histogram is requested
 
-    readers_button_clicked
+    view_top_readers_button_clicked
         Signals the Controller that top readers list is requested
     """
 
@@ -131,7 +131,7 @@ class View(ttk.Frame):
         # Change message colour to red
         self.message_label['foreground'] = 'red'
         # After 3 seconds, hide the error message
-        self.message_label.after(3000, self.hide_message)
+        self.message_label.after(5000, self.hide_message)
         # Change the text in the entry box to red to signal erroneous entry
         self.document_entry['foreground'] = 'red'
 
@@ -148,8 +148,8 @@ class View(ttk.Frame):
         self.message_label['text'] = message
         # Change text colour to green to signal valid input
         self.message_label['foreground'] = 'green'
-        # Hide message after 3 seconds
-        self.message_label.after(3000, self.hide_message)
+        # Hide message after 5 seconds
+        self.message_label.after(5000, self.hide_message)
 
         # reset the form
         self.document_entry['foreground'] = 'black'
@@ -195,3 +195,31 @@ class View(ttk.Frame):
         """Signals controller that top readers list is requested"""
         if self.controller:
             self.controller.view_top_readers()
+
+    def view_listbox(self, readers_list):
+        """
+        Displays Top 10 Readers in new GUI window
+
+        Unlike other GUI methods, this one works in reserve order. When Top Readers button is clicked,
+        it asks Controller to get the top readers from Model and then this function is invoked with that list.
+
+        Parameters
+        ----------
+        readers_list: list
+            List containing top 10 readers and their read times
+        """
+        # Create a new tkinter window to display top readers
+        readers_window = tk.Tk()
+        readers_window.title('Top 10 Readers')
+        # Create Tree view widget and add columns/headings
+        columns = ('visitor_uuid', 'read_time')
+        tree = ttk.Treeview(readers_window, columns=columns, show='headings')
+        tree.heading('visitor_uuid', text='Visitor UUID')
+        tree.heading('read_time', text='Reading time (seconds)')
+
+        # Loop over reader list and add to tree widget
+        for reader in readers_list:
+            tree.insert('', tk.END, values=reader)
+        tree.grid(row=0, column=0, sticky='nsew')
+        # Run the window containing tree widget
+        readers_window.mainloop()

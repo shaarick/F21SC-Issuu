@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
+import pandas as pd
 from data import get_data
 from data import get_data_from_url
 from convert import Convert
 import numpy as np
 from matplotlib.ticker import PercentFormatter
+from timer import timer
 
 
 class Model:
@@ -23,10 +25,10 @@ class Model:
 
     Methods
     -------
-    view_country
+    view_country(doc_uuid: str)
         Plots countries of viewers for a given document_id
 
-    view_continent
+    view_continent(doc_uuid: str)
         Plots continents of viewers for a given document_id
 
     view_long_browsers
@@ -37,15 +39,17 @@ class Model:
 
     view_top_readers
         Displays top 10 readers for the entire dataset
+
     """
 
     def __init__(self, args, document_id):
+        # Make document_id private so values can be validated before setting
         self._document_id = document_id
         self.args = args
         # In the command line, if url was mentioned use it to retrieve JSON data
         if args['url'] is not None:
             self.df = get_data_from_url(args['url'])
-        # If no url was mentioned, use the locally saved small sample issuu data
+        # If no url was mentioned, use the file name passed in CLI
         else:
             self.df = get_data(args['file_name'])
 
@@ -73,21 +77,26 @@ class Model:
             raise ValueError("No document ID entered.")
         # If no files found with given document_id, raise error
         elif len(series) == 0:
-            raise KeyError("No document found.")
+            raise KeyError("No document found with that UUID found.")
         # Otherwise change the Model class's current document_id to supplied value
         else:
             self._document_id = value
 
     def view_country(self, viewing=True):
         """
-        View country and continent of viewers for the class's current document_id
+        View country of viewers for the class's current document_id
+
+        Parameters
+        ----------
+        viewing: Bool, optional
+            Default is True. This method returns a dataframe where only records corresponding to the Model class's
+            document_id are present. That new df is used by view_continents method so that it does not have to filter
+            data again, but if we use this method directly it will display the country histogram too. The bool value
+            prevents unwanted graph.
 
         """
+        # If running the app without the GUI set the document id manually (otherwise View does it via Controller)
         if self.args['task'] != '7':
-            if self.args['document_uuid'] is None:
-                raise ValueError("No document uuid provided")
-            elif len(self.df[self.df.subject_doc_id == self.args['document_uuid']]) == 0:
-                raise ValueError("No document with that uuid found")
             self.document_id = self.args['document_uuid']
 
         # Filter the dataset dataframe to only get rows which correspond to the given document_id
@@ -108,13 +117,11 @@ class Model:
         return doc_with_id
 
     def view_continent(self):
+        """View continent of viewers for the class's current document_id"""
+
+        # If running the app without the GUI set the document id manually (otherwise View does it via Controller)
         if self.args['task'] != '7':
-            if self.args['document_uuid'] is None:
-                raise ValueError("No document uuid provided")
-            elif len(self.df[self.df.subject_doc_id == self.args['document_uuid']]) == 0:
-                raise ValueError("No document with that uuid found")
-            else:
-                self.document_id = self.args['document_uuid']
+            self.document_id = self.args['document_uuid']
 
         # Prepare two figures side by side
         fig, ax2 = plt.subplots(1, 1, figsize=(6, 6))
@@ -139,7 +146,7 @@ class Model:
         """
         Display Histogram of each browser used in the dataset
 
-        Displays histogram of long browser names, i.e. the full visitor_useragent value
+        Displays histogram of long browser names, i.e. the full visitor_useragent string
         """
         print("Creating Histogram...")
         # Prepare figure and axis
@@ -176,5 +183,27 @@ class Model:
         plt.gca().yaxis.set_major_formatter(PercentFormatter(1))
         plt.show()
 
+    @timer
     def view_top_readers(self):
-        pass
+        """View Top 10 Readers for the dataset according to their page read time"""
+
+        data = []
+        # Group dataset by visitor_uuid
+        groups = self.df.groupby('visitor_uuid')
+        for group_key, group_value in groups:
+            # Separate into groups using uuid
+            group = groups.get_group(group_key).reset_index(drop=True)
+            # Sum their page readtime column and convert it to seconds
+            total_read_time_seconds = (group.event_readtime.sum()) / 1000
+            # Append uuid and read time to data list above
+            data.append([group.visitor_uuid.iloc[0], total_read_time_seconds])
+
+        # Convert data list into dataframe
+        readers_df = pd.DataFrame(data, columns=['visitor_uuid', 'read_time'])
+        # Sort by read time values in descending order
+        readers_df.sort_values(by=['read_time'], ascending=False, inplace=True)
+        readers_df.rename(columns={'read_time': 'read time (seconds)'}, inplace=True)
+        # Get the top ten readers, print and return them. The returned values are used for GUI if requested
+        top_10_readers = readers_df.iloc[0:10]
+        print(top_10_readers)
+        return top_10_readers

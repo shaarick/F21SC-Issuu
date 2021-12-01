@@ -1,6 +1,6 @@
 class Controller:
     """
-    Controller class to facilitate interaction between Model and View
+    Controller class to facilitate interaction between Model and View classes
 
     Takes instructions from Views and runs appropriate Model methods. E.g: If "View Country & Continent" button is
     pressed in Views, it signals the controller with a document_id, which the controller then passes to the Model class
@@ -83,5 +83,10 @@ class Controller:
         self.model.view_short_browsers()
 
     def view_top_readers(self):
-        """Invoke Model's method to display top 10 readers"""
-        self.model.view_top_readers()
+        """Invoke Model's method to display top 10 readers and View them as well"""
+        # Model returns dataframe of top readers
+        top_readers = self.model.view_top_readers()
+        # Convert above dataframe to a list
+        top_readers_list = top_readers.values.tolist()
+        # Use View method to display top readers in GUI
+        self.view.view_listbox(top_readers_list)

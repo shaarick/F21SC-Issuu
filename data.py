@@ -6,6 +6,10 @@ from timer import timer
 
 """
 Module for converting JSON files into dataframes which can then be used by our program.
+
+This module contains some extra functions (e.g. getting data from url) because of a misunderstanding.
+But because those functions were already created and tested, they're still included as additional features.
+
 """
 
 
@@ -14,18 +18,21 @@ def get_data(name: str, testing=False) -> pd.DataFrame:
     """
     Convert JSON data to Pandas Dataframe.
 
-    This function assumes a "issuu_cw2.json" file is present in the same directory.
     It converts all JSON objects in the file to a dictionary, all of which are appended to a list
     and then converted to a pandas dataframe.
 
     Parameters
     ----------
+    name: str
+        Filename
+
     testing: Bool, optional
         Default is False. When true, searches for .json text file in parent directory.
+
     Returns
     -------
-    df
-        A Pandas dataframe containinng all the JSON objects from the local file.
+    df: pd.DataFrame
+        A Pandas dataframe containing all the JSON objects from the file.
 
     """
     # Create empty list
@@ -38,7 +45,7 @@ def get_data(name: str, testing=False) -> pd.DataFrame:
     else:
         file = name
 
-    # Open .JSON file using context manager
+    # Open JSON file using context manager
     with open(file) as f:
         # File contains multiple JSON objects. Loop over all of them.
         for js in f:
@@ -50,6 +57,7 @@ def get_data(name: str, testing=False) -> pd.DataFrame:
     return df
 
 
+@timer
 def get_data_from_url(url: str) -> pd.DataFrame:
     """
     Convert JSON webpage to a Pandas Dataframe
@@ -66,18 +74,23 @@ def get_data_from_url(url: str) -> pd.DataFrame:
 
     Returns
     -------
-    df
+    df: pd.DataFrame
         Pandas Dataframe containing all the JSON objects found on the webpage
     """
     print("Began reading webpage")
     with request.urlopen(url) as response:
+        # Read Webpage
         content = response.read()
+        # Convert to string
         text = content.decode()
+        # Split into distinct JSON objects based on newline
         json_objects = text.strip().split('\n')
         doc_list = []
         for obj in json_objects:
+            # Convert string of JSON to dictionary
             js = json.loads(obj)
+            # Append dictionary to list
             doc_list.append(js)
-    print("Finished reading webpage")
+    # Convert list to dataframe
     df = pd.DataFrame(doc_list)
     return df

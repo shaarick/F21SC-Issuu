@@ -3,6 +3,7 @@ import time
 
 
 def timer(func):
+    """Decorator to display function run time"""
     @functools.wraps(func)
     def wrapper_timer(*args, **kwargs):
         tic = time.perf_counter()
