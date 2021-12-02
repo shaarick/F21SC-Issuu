@@ -1,3 +1,6 @@
+import tkinter
+
+
 class Controller:
     """
     Controller class to facilitate interaction between Model and View classes
@@ -90,3 +93,14 @@ class Controller:
         top_readers_list = top_readers.values.tolist()
         # Use View method to display top readers in GUI
         self.view.view_listbox(top_readers_list)
+
+    def view_top_documents(self, doc_id, user_id):
+        self.model.view_top_documents(doc_id, user_id)
+
+    def select_data(self, filename):
+        try:
+            self.model.select_data(filename)
+            self.view.show_success("Changed dataset successfully")
+            self.view.user_id.set('')
+        except tkinter.TclError as e:
+            self.view.show_error(e)

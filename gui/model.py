@@ -40,6 +40,12 @@ class Model:
     view_top_readers
         Displays top 10 readers for the entire dataset
 
+    readers_of_document(doc_uuid: str)
+        Returns all readers of a document
+
+    documents_read_by_user(user_uuid: str)
+        Returns all documents_uuids read by a user
+
     """
 
     def __init__(self, args, document_id):
@@ -53,8 +59,12 @@ class Model:
         else:
             self.df = get_data(args['file_name'])
 
+    def select_data(self, filename):
+        self.df = get_data(filename)
+
     @property
     def document_id(self):
+        """Getter for _document_id"""
         return self._document_id
 
     @document_id.setter
@@ -186,14 +196,13 @@ class Model:
     @timer
     def view_top_readers(self):
         """View Top 10 Readers for the dataset according to their page read time"""
-
         data = []
         # Group dataset by visitor_uuid
         groups = self.df.groupby('visitor_uuid')
         for group_key, group_value in groups:
             # Separate into groups using uuid
             group = groups.get_group(group_key).reset_index(drop=True)
-            # Sum their page readtime column and convert it to seconds
+            # Sum their page read time column and convert it to seconds
             total_read_time_seconds = (group.event_readtime.sum()) / 1000
             # Append uuid and read time to data list above
             data.append([group.visitor_uuid.iloc[0], total_read_time_seconds])
@@ -207,3 +216,55 @@ class Model:
         top_10_readers = readers_df.iloc[0:10]
         print(top_10_readers)
         return top_10_readers
+
+    def readers_of_document(self, doc_uuid: str):
+        """For a given document_uuid, return all visitor_uuid who read the document"""
+        df = self.df[self.df['subject_doc_id'] == doc_uuid]
+        df = df[df['subject_type'] == 'doc']
+        df = df[df['event_type'] == 'read']
+        if len(df) == 0:
+            raise ValueError("No document found")
+        # df.drop_duplicates(subset=['visitor_username'], keep='first', inplace=True)
+        return list(df['visitor_uuid'].unique())
+
+    def documents_read_by_user(self, user_uuid: str):
+        """For a given user_uuid, return all the document_uuids that have been read"""
+        df = self.df[self.df.visitor_uuid == user_uuid]
+        df = df[df['subject_type'] == 'doc']
+        df = df[df['event_type'] == 'read']
+        if len(df) == 0:
+            raise ValueError("No user found")
+        # Some doc_ids were NaN weirdly enough, so had to drop those.
+        df = df[df['subject_doc_id'].notna()]
+        unique_df = df['subject_doc_id'].unique()
+        unique_list = list(unique_df)
+        unique_list_with_abbreviated_names = list(map(lambda x: x[-4:], unique_list))
+        return unique_list_with_abbreviated_names
+
+    def view_top_documents(self, doc_uuid: str, user_uuid: str = None):
+        """ Shows top documents that were also read by users who read doc_uuid"""
+
+        # All readers of input document
+        readers = self.readers_of_document(doc_uuid)
+
+        records = {}
+        for reader in readers:
+            # If current user is the same as reader, we do not count their 'vote'/'read' for non-input documents.
+            if user_uuid is not None and reader[-4:] == user_uuid[-4:]:
+                continue
+            # All documents read by this user
+            documents_read = self.documents_read_by_user(reader)
+            # Check for each document
+            for document in documents_read:
+                # If it is not input document
+                if document != doc_uuid[-4:]:
+                    # And not present in records dictionary
+                    if document not in records:
+                        # Add document to dic with count as 1
+                        records[document] = 1
+                    else:
+                        # Increment document count
+                        records[document] += 1
+
+        # df = pd.DataFrame.from_dict(records)
+        print(records)

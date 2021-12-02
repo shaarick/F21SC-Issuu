@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from .controller import Controller
+from tkinter import filedialog
+import os
 
 
 class View(ttk.Frame):
@@ -57,21 +59,25 @@ class View(ttk.Frame):
 
         # Label
         self.label = ttk.Label(self, text='Document ID:')
-        self.label.grid(row=1, column=0)
+        self.label.grid(row=0, column=0)
 
         # Document ID Entry box
         self.document_id = tk.StringVar(name="Document UUID")
         self.document_entry = ttk.Entry(self, textvariable=self.document_id, width=30)
-        self.document_entry.grid(row=1, column=1, sticky=tk.NSEW)
+        self.document_entry.grid(row=0, column=1, sticky=tk.NSEW)
 
         # Label
         self.label_user = ttk.Label(self, text='User UUID:')
-        self.label_user.grid(row=2, column=0)
+        self.label_user.grid(row=1, column=0)
 
         # User ID Entry box
         self.user_id = tk.StringVar(name="User UUID")
-        self.user_id = ttk.Entry(self, textvariable=self.user_id, width=30)
-        self.user_id.grid(row=2, column=1, sticky=tk.NSEW)
+        self.user_id_entry = ttk.Entry(self, textvariable=self.user_id, width=30)
+        self.user_id_entry.grid(row=1, column=1, sticky=tk.NSEW)
+
+        # File Dialog
+        file_explore = tk.Button(self, text='Select Dataset', command=self.browse_files)
+        file_explore.grid(row=2, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Country Button
         self.view_button = ttk.Button(self, text='View Country', command=self.view_country_button_clicked)
@@ -95,9 +101,13 @@ class View(ttk.Frame):
                                              command=self.view_top_readers_button_clicked)
         self.top_readers_button.grid(row=7, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
+        # View Top Documents
+        self.top_documents_button = ttk.Button(self, text='Top 10 Documents', command=self.view_top_documents)
+        self.top_documents_button.grid(row=8, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
+
         # Message
         self.message_label = ttk.Label(self, text='', foreground='red')
-        self.message_label.grid(row=8, column=0, columnspan=2, sticky=tk.NSEW)
+        self.message_label.grid(row=9, column=0, columnspan=2, sticky=tk.NSEW)
 
         # Set Controller
         self.controller = None
@@ -223,3 +233,14 @@ class View(ttk.Frame):
         tree.grid(row=0, column=0, sticky='nsew')
         # Run the window containing tree widget
         readers_window.mainloop()
+
+    def view_top_documents(self):
+        if self.controller:
+            self.controller.view_top_documents(self.document_id.get(), self.user_id.get())
+
+    def browse_files(self):
+        dir = os.getcwd()
+        filename = filedialog.askopenfilename(initialdir=dir, title='Select a File',
+                                              filetypes=[("JSON Files", "*.json")])
+        if self.controller:
+            self.controller.select_data(filename)

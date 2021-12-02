@@ -13,3 +13,5 @@ def run_tasks(args: dict, model):
         model.view_short_browsers()
     elif task == '4':
         model.view_top_readers()
+    elif task == '5d':
+        model.view_top_documents(args['document_uuid'], args['user_uuid'])

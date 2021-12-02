@@ -8,7 +8,7 @@ class DataTest(unittest.TestCase):
         self.link = "http://www.macs.hw.ac.uk/~hwloidl/Courses/F21SC/Test_Data/sample_100k_lines.json"
         self.no_link = ""
         self.random_link = "http://www.google.com"
-        self.a = data.get_data(testing=True)
+        self.a = data.get_data("issuu_cw2.json", testing=True)
         self.b = data.get_data_from_url(self.link)
 
     def test_get_data_from_link_invalid_url(self):
