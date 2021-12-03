@@ -14,4 +14,9 @@ def run_tasks(args: dict, model):
     elif task == '4':
         model.view_top_readers()
     elif task == '5d':
-        model.view_top_documents(args['document_uuid'], args['user_uuid'])
+        if args['sorter'] is None:
+            model.view_top_documents(args['document_uuid'], args['user_uuid'], sort=None)
+        elif args['sorter'] == 'desc':
+            model.view_top_documents(args['document_uuid'], args['user_uuid'], sort='desc')
+    elif task == '6':
+        model.view_also_likes(args['document_uuid'], args['user_uuid'])

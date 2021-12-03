@@ -95,12 +95,32 @@ class Controller:
         self.view.view_listbox(top_readers_list)
 
     def view_top_documents(self, doc_id, user_id):
-        self.model.view_top_documents(doc_id, user_id)
+        """View Top documents by read time"""
+        # Get list of top docs from model
+        top_dict = self.model.view_top_documents(doc_id, user_id)
+        # Pass it to View to display it
+        self.view.view_top_documents_listbox(top_dict)
 
     def select_data(self, filename):
+        """
+        Change Dataset
+
+        Warnings
+        ---------
+        DOES NOT work on macOS. There is some compatibility issue on tkinter's side. Not tested on Windows.
+
+        Notes
+        -----
+        Works fine on Linux
+        """
         try:
+            # Pass new filename to model, which loads data from it
             self.model.select_data(filename)
             self.view.show_success("Changed dataset successfully")
             self.view.user_id.set('')
         except tkinter.TclError as e:
             self.view.show_error(e)
+
+    def view_also_likes(self, doc_id, user_id=None):
+        """View graph of also like documents"""
+        self.model.view_also_likes(doc_id, user_id)

@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from .controller import Controller
+from gui.controller import Controller
 from tkinter import filedialog
 import os
 
@@ -49,6 +49,21 @@ class View(ttk.Frame):
 
     view_top_readers_button_clicked
         Signals the Controller that top readers list is requested
+
+    view_listbox(readers_list: list)
+        Displays Top 10 Readers in new GUI window
+
+    view_top_documents
+        Requests a dictionary of top documents from the Controller
+
+    view_top_documents_listbox(docs: dict)
+        Receives a dictionary of top documents and displays in a new window
+
+    browse_files
+        Opens file browser to choose dataset. Does not work on macOS. Works on Linux.
+
+    view_also_likes
+        Sends field data to Controller and requests a graph of all also likes documents
     """
 
     def __init__(self, args, parent):
@@ -80,34 +95,40 @@ class View(ttk.Frame):
         file_explore.grid(row=2, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Country Button
-        self.view_button = ttk.Button(self, text='View Country', command=self.view_country_button_clicked)
+        self.view_button = ttk.Button(self, text='2a. View Country', command=self.view_country_button_clicked)
         self.view_button.grid(row=3, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Continent Button
-        self.view_button_continent = ttk.Button(self, text='View Continent', command=self.view_continent_button_clicked)
+        self.view_button_continent = ttk.Button(self, text='2b. View Continent',
+                                                command=self.view_continent_button_clicked)
         self.view_button_continent.grid(row=4, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Long Browsers Button
-        self.browser_button = ttk.Button(self, text='View Long Browsers', command=self.view_long_browser_button_clicked)
+        self.browser_button = ttk.Button(self, text='3a. View Long Browsers',
+                                         command=self.view_long_browser_button_clicked)
         self.browser_button.grid(row=5, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Short Browsers Button
-        self.browser_button_short = ttk.Button(self, text='View Short Browsers',
+        self.browser_button_short = ttk.Button(self, text='3b. View Short Browsers',
                                                command=self.view_short_browser_button_clicked)
         self.browser_button_short.grid(row=6, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Top Readers Button
-        self.top_readers_button = ttk.Button(self, text='Top 10 Readers',
+        self.top_readers_button = ttk.Button(self, text='4. Top 10 Readers',
                                              command=self.view_top_readers_button_clicked)
         self.top_readers_button.grid(row=7, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # View Top Documents
-        self.top_documents_button = ttk.Button(self, text='Top 10 Documents', command=self.view_top_documents)
+        self.top_documents_button = ttk.Button(self, text='5d. Top 10 Documents', command=self.view_top_documents)
         self.top_documents_button.grid(row=8, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
+
+        # View 'Also Likes' Graph
+        self.also_likes_graph_button = ttk.Button(self, text='6. "Also Likes" Graph', command=self.view_also_likes)
+        self.also_likes_graph_button.grid(row=9, column=0, columnspan=2, padx=3, sticky=tk.NSEW)
 
         # Message
         self.message_label = ttk.Label(self, text='', foreground='red')
-        self.message_label.grid(row=9, column=0, columnspan=2, sticky=tk.NSEW)
+        self.message_label.grid(row=10, column=0, columnspan=2, sticky=tk.NSEW)
 
         # Set Controller
         self.controller = None
@@ -235,12 +256,58 @@ class View(ttk.Frame):
         readers_window.mainloop()
 
     def view_top_documents(self):
+        """Signals to controller that top documents were requested"""
         if self.controller:
             self.controller.view_top_documents(self.document_id.get(), self.user_id.get())
 
     def browse_files(self):
-        dir = os.getcwd()
-        filename = filedialog.askopenfilename(initialdir=dir, title='Select a File',
+        """Create a file browser to choose a new dataset
+
+        Warnings
+        --------
+        DOES NOT WORK ON macOS. This has nothing to do with my code, but with tkinter and macOS.
+        see:
+        https://bugs.python.org/issue44828
+        https://www.mail-archive.com/search?l=python-bugs-list@python.org&q=subject:%22%5C%5Bissue44828%5C%5D+Using+tkinter.filedialog+crashes+on+macOS+Python+3.9.6%22&o=newest&f=1
+
+        Notes
+        -----
+        Working fine on Linux. Tested on Ubuntu 20.4
+        """
+        direc = os.getcwd()
+        filename = filedialog.askopenfilename(initialdir=direc, title='Select a File',
                                               filetypes=[("JSON Files", "*.json")])
         if self.controller:
             self.controller.select_data(filename)
+
+    def view_top_documents_listbox(self, dic):
+        """
+        Displays Top 10 Documents in a new GUI window
+
+        Parameters
+        ----------
+        dic
+            sorted dictionary containing documents with their reader count
+
+        """
+        # Create a new tkinter window to display top documents
+        documents_window = tk.Tk()
+        documents_window.title('Top 10 Documents')
+
+        # Create Tree view widget and add columns/headings
+        columns = ('document_uuid', 'num_readers')
+        tree = ttk.Treeview(documents_window, columns=columns, show='headings')
+        tree.heading('document_uuid', text='Document UUID (last 4 digit)')
+        tree.heading('num_readers', text='Number of Readers')
+
+        # Loop over reader list and add to tree widget
+        for key, value in dic.items():
+            tree.insert('', tk.END, values=(key, value))
+        tree.grid(row=0, column=0, sticky='nsew')
+        # Run the window containing tree widget
+        documents_window.mainloop()
+
+    def view_also_likes(self):
+        """Signals to controller that Also Likes Graph was requested"""
+        if self.controller:
+            self.controller.view_also_likes(self.document_id.get(), self.user_id.get())

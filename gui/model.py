@@ -6,6 +6,8 @@ from convert import Convert
 import numpy as np
 from matplotlib.ticker import PercentFormatter
 from timer import timer
+from graphviz import Digraph
+from sorters import desc
 
 
 class Model:
@@ -46,6 +48,15 @@ class Model:
     documents_read_by_user(user_uuid: str)
         Returns all documents_uuids read by a user
 
+    counter(readers:list, doc_id:str, user_id:str)
+        Function meant to use as a higher order counter
+
+    view_top_documents(doc_uuid: str, user_uuid: str, sort: func)
+        Returns the top 10 also like documents
+
+    view_also_likes(doc_uuid: str, user_uuid: str)
+        Graphs all also like documents
+
     """
 
     def __init__(self, args, document_id):
@@ -57,7 +68,8 @@ class Model:
             self.df = get_data_from_url(args['url'])
         # If no url was mentioned, use the file name passed in CLI
         else:
-            self.df = get_data(args['file_name'])
+            self.current_filename = args['file_name']
+            self.df = get_data(self.current_filename)
 
     def select_data(self, filename):
         self.df = get_data(filename)
@@ -224,7 +236,6 @@ class Model:
         df = df[df['event_type'] == 'read']
         if len(df) == 0:
             raise ValueError("No document found")
-        # df.drop_duplicates(subset=['visitor_username'], keep='first', inplace=True)
         return list(df['visitor_uuid'].unique())
 
     def documents_read_by_user(self, user_uuid: str):
@@ -232,28 +243,29 @@ class Model:
         df = self.df[self.df.visitor_uuid == user_uuid]
         df = df[df['subject_type'] == 'doc']
         df = df[df['event_type'] == 'read']
+        df = df[df['env_type'] == 'reader']
         if len(df) == 0:
             raise ValueError("No user found")
         # Some doc_ids were NaN weirdly enough, so had to drop those.
         df = df[df['subject_doc_id'].notna()]
+        # Avoiding sets here because for large series df.unique() is faster
         unique_df = df['subject_doc_id'].unique()
         unique_list = list(unique_df)
+        # Abbreviate document IDs to last four characters
         unique_list_with_abbreviated_names = list(map(lambda x: x[-4:], unique_list))
         return unique_list_with_abbreviated_names
 
-    def view_top_documents(self, doc_uuid: str, user_uuid: str = None):
-        """ Shows top documents that were also read by users who read doc_uuid"""
-
-        # All readers of input document
-        readers = self.readers_of_document(doc_uuid)
-
+    # Higher order function
+    def counter(self, readers: list, doc_uuid: str, user_uuid=None) -> dict:
+        # Empty dictionary to contain frequency of documents
         records = {}
         for reader in readers:
-            # If current user is the same as reader, we do not count their 'vote'/'read' for non-input documents.
+            # If current user is the same as input reader, we do not count their 'vote'/'read' for non-input documents.
             if user_uuid is not None and reader[-4:] == user_uuid[-4:]:
                 continue
             # All documents read by this user
             documents_read = self.documents_read_by_user(reader)
+
             # Check for each document
             for document in documents_read:
                 # If it is not input document
@@ -263,8 +275,118 @@ class Model:
                         # Add document to dic with count as 1
                         records[document] = 1
                     else:
-                        # Increment document count
+                        # If present in dictionary, increment document count
                         records[document] += 1
 
-        # df = pd.DataFrame.from_dict(records)
-        print(records)
+        return records
+
+    def view_top_documents(self, doc_uuid: str, user_uuid: str = None, sort=None):
+        """ Shows top documents that were also read by users who read doc_uuid"""
+
+        # All readers of input document
+        readers = self.readers_of_document(doc_uuid)
+
+        if sort is None:
+            sort_type = '(alphabetical on keys)'
+            # Generate records of document as keys and their count as values
+            records = self.counter(readers, doc_uuid, user_uuid)
+            # Sort the dictionary using default params, i.e. on keys of the dic and alphabetically
+            sorted_dic = dict(sorted(records.items()))
+
+        # Only implementing one higher order sort function, so else automatically means that
+        else:
+            sort_type = '(descending on values)'
+            # Sort the dictionary using values, i.e. counts and in descending order
+            # desc takes in all readers, a function to count them, and ID values
+            sorted_dic = desc(readers, self.counter, doc_uuid, user_uuid)
+
+        # If the sorted dictionary has more then 10 documents, we need to trim it
+        if len(sorted_dic) > 10:
+            # Create new dictionary
+            top_documents_dictionary = {}
+            # This iteration goes from first element to last. E.g for descending sort, it will iterate from
+            # max count to lowest.
+            for document, count in sorted_dic.items():
+                # Get key, value pair. If the new dic does not have more than 10 entries, append the new one
+                if len(top_documents_dictionary) < 10:
+                    top_documents_dictionary[document] = count
+                else:
+                    # Once we have 10 entries break the loop
+                    break
+        else:
+            top_documents_dictionary = sorted_dic
+
+        print('Top 10 Documents ' + sort_type)
+        print('document_uuid    number of readers')
+        for key, value in top_documents_dictionary.items():
+            print(f'{key}                   {value}')
+
+        return top_documents_dictionary
+
+    @timer
+    def view_also_likes(self, doc_id, user_id=None):
+        """
+        Creates graph of all 'also like' documents for given doc_id and user id
+
+        For the input document, all readers are identified. Then for those readers,
+        all of the documents they've read are identified. These documents are then
+        plotted.
+
+        Parameters
+        ----------
+        doc_id: str
+            Input document ID
+
+        user_id: str, optional
+            Input user ID
+
+        """
+        # All readers of input document
+        readers = self.readers_of_document(doc_id)
+
+        # Create empty dictionary to store readers and their documents
+        records = {}
+        # Iterate over each reader of the input document
+        for reader in readers:
+            if user_id is None:
+                # Get docs read by user
+                docs_read = self.documents_read_by_user(reader)
+                # Append it to dictionary
+                records[reader[-4:]] = docs_read
+
+            # If input user is provided, we do not want to add them to this dictionary.
+            # Will add them manually when graphing
+            elif user_id is not None and reader[-4:] != user_id[-4:]:
+                docs_read = self.documents_read_by_user(reader)
+                records[reader[-4:]] = docs_read
+
+        # get filename to add to the arrow
+        num = 'Size: ' + self.current_filename.split('_')[1]
+
+        # create digraph
+        graph = Digraph(filename='also_likes.gv')
+
+        # Show relation between nodes
+        graph.node('Readers', color='white')
+        graph.node('Documents', color='white')
+        graph.edge('Readers', 'Documents', label=num)
+
+        # Add input document as node
+        graph.node(doc_id[-4:], style='filled', fillcolor='#3ab125')
+
+        # If input user is given, create a node for them and add edge to input doc
+        if user_id is not None:
+            graph.node(user_id[-4:], style='filled', fillcolor='#3ab125', shape='box')
+            graph.edge(user_id[-4:], doc_id[-4:])
+
+        # Iterate over reader:docs_read dic we created earlier
+        for key, values in records.items():
+            # values represent a list of documents read by reader(key)
+            # Iterate over each document read by this reader
+            for item in values:
+                graph.node(key, shape='box')
+                graph.node(item, shape='circle')
+                graph.edge(key, item)
+
+        # View Graph
+        graph.view()
